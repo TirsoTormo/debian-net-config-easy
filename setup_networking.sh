@@ -27,8 +27,7 @@ check_root() {
 # Función para configurar una única interfaz de forma interactiva
 configure_interface() {
     
-    # 1. Obtener el nombre de la interfaz y el método (static/dhcp)
-    
+    # 1. Obtener el nombre de la interfaz y el método
     read -r -p "Introduce el nombre de la interfaz (ej. eth0, enp0s3): " INTERFACE
     
     while true; do
@@ -41,38 +40,64 @@ configure_interface() {
         fi
     done
 
-    # Escribir la configuración base de la interfaz
+    # Escribir la configuración base de la interfaz (auto y iface)
     echo "" >> "$INTERFACES_FILE"
     echo "auto ${INTERFACE}" >> "$INTERFACES_FILE"
     echo "iface ${INTERFACE} inet ${METHOD}" >> "$INTERFACES_FILE"
 
-    # 2. Bloque condicional: Solo si es estática, se piden los detalles
+    # Bloque condicional: STATIC
     if [ "$METHOD" == "static" ]; then
         
-        # --- Preguntas SOLO para STATIC ---
+        # --- Recolección de datos estáticos ---
         read -r -p "Introduce la dirección IP: " ADDRESS
-        read -r -p "Introduce la máscara de red: " NETMASK
-        read -r -p "Introduce el Gateway/Puerta de enlace (Opcional, deja vacío): " GATEWAY
-        read -r -p "Introduce los Servidores DNS (separados por espacio, ej. 8.8.8.8 1.1.1.1. Opcional): " DNS_SERVERS
         
-        # Escribir los detalles estáticos en el archivo
-        echo "  address ${ADDRESS}" >> "$INTERFACES_FILE"
-        echo "  netmask ${NETMASK}" >> "$INTERFACES_FILE"
-        
-        [ -n "$GATEWAY" ] && echo "  gateway ${GATEWAY}" >> "$INTERFACES_FILE" 
+        while true; do
+            read -r -p "Introduce la máscara de red (formato: 255.255.255.0): " NETMASK
+            # Simple comprobación para desalentar el formato CIDR
+            if [[ "$NETMASK" == */* ]]; then
+                echo "ADVERTENCIA: Por favor, utiliza la notación decimal con puntos (255.255.255.0)."
+            else
+                break
+            fi
+        done
 
-        # Añadir DNS (si se proporcionaron)
+        read -r -p "Introduce el Gateway/Puerta de enlace (Opcional, deja vacío): " GATEWAY
+        read -r -p "Introduce los Servidores DNS (separados por espacio, ej. 8.8.8.8 1.1.1.1. Opcional): " DNS_SERVER
+        
+        # --- Limpieza de Espacios (CRÍTICO: evita que los espacios rompan la sintaxis) ---
+        ADDRESS=$(echo "$ADDRESS" | xargs)
+        NETMASK=$(echo "$NETMASK" | xargs)
+        GATEWAY=$(echo "$GATEWAY" | xargs)
+        DNS_SERVERS=$(echo "$DNS_SERVERS" | xargs)
+        
+        # --- Validación y Escritura ---
+        
+        # Verificación de IP y Máscara (son obligatorios para static)
+        if [ -z "$ADDRESS" ] || [ -z "$NETMASK" ]; then
+            echo "ERROR: La Dirección IP y la Máscara de red son obligatorias para la configuración estática. La configuración de ${INTERFACE} podría ser inválida."
+        else
+            # Escribir dirección y máscara (obligatorio)
+            echo "  address ${ADDRESS}" >> "$INTERFACES_FILE"
+            echo "  netmask ${NETMASK}" >> "$INTERFACES_FILE"
+        fi
+        
+        # Escribir Gateway solo si la variable NO está vacía (-n)
+        if [ -n "$GATEWAY" ]; then
+            echo "  gateway ${GATEWAY}" >> "$INTERFACES_FILE"
+        fi 
+
+        # Escribir DNS solo si la variable NO está vacía (-n)
         if [ -n "$DNS_SERVERS" ]; then
             echo "  dns-nameservers ${DNS_SERVERS}" >> "$INTERFACES_FILE"
         fi
         
+    # Bloque DHCP
     elif [ "$METHOD" == "dhcp" ]; then
         echo "  # DNS y otras IPs serán proporcionadas por el servidor DHCP" >> "$INTERFACES_FILE"
     fi
 
     echo "Configuración de ${INTERFACE} registrada. Continúa con la siguiente."
 }
-
 # 2. Función principal (bucle interactivo)
 process_interactive_config() {
     echo "Iniciando configuración automática e interactiva..."
