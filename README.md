@@ -1,7 +1,7 @@
 # 🛠️ debian-net-config-easy
 
 
-Este proyecto fue desarrollado como parte de las prácticas de **Administración de Sistemas Informáticos en Red (ASIX)**. Su propósito es **automatizar y simplificar** la tediosa tarea de configurar múltiples **tarjetas de red (NICs)** en entornos Debian.
+Este proyecto fue desarrollado para facilitar configuracion **Targettas de Red**. Su propósito es **automatizar y simplificar** la tediosa tarea de configurar múltiples **tarjetas de red (NICs)** en entornos Debian.
 
 En lugar de editar manualmente el archivo `/etc/network/interfaces` y arriesgarse a errores de sintaxis, esta herramienta ofrece un **asistente de configuración interactivo** que guía al usuario y asegura la aplicación correcta de los parámetros estáticos (IP, Máscara, Gateway y DNS) o DHCP.
 
