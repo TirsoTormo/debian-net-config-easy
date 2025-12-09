@@ -20,7 +20,13 @@ Utiliza Git para clonar el repositorio en tu máquina Debian.
 cd /opt
 
 # Clona el repositorio
-git clone [https://github.com/TirsoTormo/debian-net-config-easy.git](https://github.com/TirsoTormo/debian-net-config-easy.git)
+git clone https://github.com/TirsoTormo/debian-net-config-easy.git
 
 # Accede al directorio del proyecto
 cd debian-net-config-easy
+
+# Darle permisos
+chmod +x setup_networking.sh
+
+# Ejecutalo
+sudo ./setup_networking.sh
